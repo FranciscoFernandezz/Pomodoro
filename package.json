@@ -9,7 +9,10 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "eas-cli": "^16.3.3",
     "expo": "~52.0.43",
+    "expo-av": "~15.0.2",
+    "expo-notifications": "~0.29.14",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
     "react-native": "0.76.9"
