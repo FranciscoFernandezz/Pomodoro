@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "eas-cli": "^16.3.3",
-    "expo": "~52.0.43",
-    "expo-av": "~15.0.2",
-    "expo-notifications": "~0.29.14",
-    "expo-status-bar": "~2.0.1",
-    "react": "18.3.1",
-    "react-native": "0.76.9"
+    "expo": "^53.0.9",
+    "expo-av": "~15.1.4",
+    "expo-notifications": "~0.31.2",
+    "expo-status-bar": "~2.2.3",
+    "expo-updates": "~0.28.13",
+    "react": "19.0.0",
+    "react-native": "0.79.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
