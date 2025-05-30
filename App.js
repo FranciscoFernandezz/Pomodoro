@@ -11,7 +11,7 @@ import { enviarNotificacion } from './src/utility/notifications';
 export default function App() {
   /* const [tiempo, setTiempo] = useState(0); */
   const [run, setRun] =useState(false);
-  const duraciones = [0.1 * 60, 5 * 60, 15 * 60]; // mismo orden que en Tabs
+  const duraciones = [25 * 60, 5 * 60, 15 * 60]; // mismo orden que en Tabs
   const [seleccion, setSeleccion] = useState(0);
   const [tiempo, setTiempo] = useState(duraciones[seleccion]);
   
