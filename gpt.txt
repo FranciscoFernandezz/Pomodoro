@@ -1,3 +1,5 @@
+🔴App.js:
+
 import { Platform, SafeAreaView, StyleSheet, Text, View, AppState } from 'react-native';
 import Titulo from './src/components/Titulo';
 import Timer from './src/components/Timer';
@@ -5,12 +7,12 @@ import Boton from './src/components/Boton';
 import Tabs from './src/components/Tabs';
 import { useState, useEffect, useRef } from 'react';
 import { Audio } from "expo-av";
-import * as Notifications from 'expo-notifications';
-import { enviarNotificacion, cancelarTodasNotificaciones } from './src/utility/notifications';
+import { enviarNotificacion } from './src/utility/notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerBackgroundTimer } from './src/utility/backgroundTimer';
 
 export default function App() {
-  const duraciones = [25 * 60, 5 * 60, 15 * 60];
+  const duraciones = [5 * 1, 5 * 60, 15 * 60]; // mismo orden que en Tabs
   const colores = ["#93de6b", "#66F2CD", "#D2F266"];
 
   const [run, setRun] = useState(false);
@@ -33,6 +35,7 @@ export default function App() {
 
   useEffect(() => {
     solicitarPermisosNotificaciones();
+    registerBackgroundTimer(); // ← REGISTRO DE BACKGROUND FETCH
   }, []);
 
   useEffect(() => {
@@ -40,7 +43,6 @@ export default function App() {
 
     if (run) {
       guardarInicioTemporizador();
-      enviarNotificacion(tiempo);
 
       intervalo = setInterval(() => {
         setTiempo(prev => {
@@ -48,6 +50,7 @@ export default function App() {
             clearInterval(intervalo);
             setRun(false);
             reproducirAlarma();
+            enviarNotificacion();
             AsyncStorage.removeItem('inicio');
             return 0;
           }
@@ -55,13 +58,13 @@ export default function App() {
         });
       }, 1000);
     } else {
-      cancelarTodasNotificaciones();
       AsyncStorage.removeItem('inicio');
     }
 
     return () => clearInterval(intervalo);
   }, [run]);
 
+  // Manejo del estado de la app (foreground / background)
   useEffect(() => {
     const subscription = AppState.addEventListener("change", async nextAppState => {
       if (appState.current.match(/inactive|background/) && nextAppState === "active") {
@@ -96,7 +99,7 @@ export default function App() {
     const now = Date.now();
     await AsyncStorage.setItem('inicio', now.toString());
     await AsyncStorage.setItem('duracion', duraciones[seleccion].toString());
-    await AsyncStorage.removeItem('notificado');
+    await AsyncStorage.removeItem('notificado'); // <- limpiamos el flag
   }
 
   async function reproducirAlarma() {
@@ -132,3 +135,97 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+🔴 notifications.js:
+
+import * as Notifications from "expo-notifications";
+
+// Configurar cómo se comportan las notificaciones en primer y segundo plano
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+// Función para programar una notificación
+export const enviarNotificacion = async () => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "⏳ Pomodoro Finalizado",
+      body: "Tu tiempo ha terminado. ¡Tómate un descanso!",
+      sound: true,
+    },
+    trigger: null, // Se envía de inmediato
+  });
+};
+
+🔴backgroundTimer.js:
+
+// src/utility/backgroundTimer.js
+import * as TaskManager from 'expo-task-manager';
+import * as BackgroundFetch from 'expo-background-fetch';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { enviarNotificacion } from './notifications';
+
+const BACKGROUND_FETCH_TASK = "background-fetch-timer-task";
+
+// Define la tarea que se ejecuta en segundo plano
+TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+  try {
+    const inicioStr = await AsyncStorage.getItem('inicio');
+    const duracionStr = await AsyncStorage.getItem('duracion');
+
+    if (!inicioStr || !duracionStr) {
+      return BackgroundFetch.BackgroundFetchResult.NoData;
+    }
+
+    const inicio = parseInt(inicioStr);
+    const duracion = parseInt(duracionStr);
+    const ahora = Date.now();
+    const diff = Math.floor((ahora - inicio) / 1000);
+    const notificado = await AsyncStorage.getItem('notificado');
+
+    if (diff >= duracion && notificado !== 'true') {
+      await enviarNotificacion();
+      await AsyncStorage.setItem('notificado', 'true');
+      return BackgroundFetch.BackgroundFetchResult.NewData;
+    }
+
+    return BackgroundFetch.BackgroundFetchResult.NoData;
+  } catch (error) {
+    console.error("Error en background fetch:", error);
+    return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+});
+
+// 🔧 Esta es la función que faltaba:
+export async function registerBackgroundTimer() {
+  try {
+    const status = await BackgroundFetch.getStatusAsync();
+    if (
+      status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
+      status === BackgroundFetch.BackgroundFetchStatus.Denied
+    ) {
+      console.log("Permisos de Background Fetch no concedidos");
+      return;
+    }
+
+    const isTaskDefined = TaskManager.isTaskDefined(BACKGROUND_FETCH_TASK);
+    const isRegistered = await BackgroundFetch.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+
+    if (!isRegistered && isTaskDefined) {
+      await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+        minimumInterval: 60, // cada 60 segundos
+        stopOnTerminate: false,
+        startOnBoot: true,
+      });
+      console.log("✅ Tarea de background registrada");
+    }
+  } catch (error) {
+    console.error("Error al registrar tarea en background:", error);
+  }
+}
+
+sigue sin funcionar. intenta otro metodo

@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "app-pomodoro",
-    "slug": "app-pomodoro",
+    "plugins": ["expo-task-manager", "expo-notifications"],
+    "name": "app-pomodoro-fork",
+    "slug": "app-pomodoro-fork",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +14,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundModes": ["fetch"]
     },
     "android": {
       "adaptiveIcon": {
@@ -27,14 +29,13 @@
     },
     "extra": {
       "eas": {
-        "projectId": "4778d827-d099-4da2-86e2-2afcb489052a"
+        "projectId": "5e75d94b-5706-485d-8393-061316605ddc"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0", 
     "updates": {
       "url": "https://u.expo.dev/4778d827-d099-4da2-86e2-2afcb489052a"
-    }
+    },
+    "owner": "nehuenricardi"
   }
 }
